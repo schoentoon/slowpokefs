@@ -178,6 +178,49 @@ void usage() {
   exit(0);
 };
 
+//#define ASCII_SLOWPOKE /* Uncomment this define to get rid of the big ascii slowpoke */
+
+void version() {
+  printf("Slowpokefs ~ %s\n", VERSION);
+#ifndef ASCII_SLOWPOKE
+  printf("                                  _.---\"'\"\"\"\"\"'`--.._\n");
+  printf("                             _,.-'                   `-._\n");
+  printf("                         _,.\"                            -.\n");
+  printf("                     .-\"\"   ___...---------.._             `.\n");
+  printf("                     `---'\"\"                  `-.            `.\n");
+  printf("                                                 `.            \\\n");
+  printf("                                                   `.           \\\n");
+  printf("                                                     \\           \\\n");
+  printf("                                                      .           \\\n");
+  printf("                                                      |            .\n");
+  printf("                                                      |            |\n");
+  printf("                                _________             |            |\n");
+  printf("                          _,.-'\"         `\"'-.._      :            |\n");
+  printf("                      _,-'                      `-._.'             |\n");
+  printf("                   _.'                              `.             '\n");
+  printf("        _.-.    _,+......__                           `.          .\n");
+  printf("      .'    `-\"'           `\"-.,-\"\"--._                 \\        /\n");
+  printf("     /    ,'                  |    __  \\                 \\      /\n");
+  printf("    `   ..                       +\"  )  \\                 \\    /\n");
+  printf("     `.'  \\          ,-\"`-..    |       |                  \\  /\n");
+  printf("      / \" |        .'       \\   '.    _.'                   .'\n");
+  printf("     |,..\"--\"\"\"--..|    \"    |    `\"\"`.                     |\n");
+  printf("   ,\"               `-._     |        |                     |\n");
+  printf(" .'                     `-._+         |                     |\n");
+  printf("/                           `.                        /     |\n");
+  printf("|    `     '                  |                      /      |\n");
+  printf("`-.....--.__                  |              |      /       |\n");
+  printf("   `./ \"| / `-.........--.-   '              |    ,'        '\n");
+  printf("     /| ||        `.'  ,'   .'               |_,-+         /\n");
+  printf("    / ' '.`.        _,'   ,'     `.          |   '   _,.. /\n");
+  printf("   /   `.  `\"'\"'\"\"'\"   _,^--------\"`.        |    `.'_  _/\n");
+  printf("  /... _.`:.________,.'              `._,.-..|        \"'\n");
+  printf(" `.__.'                                 `._  /\n");
+  printf("                                           \"'\n");
+#endif
+  exit(0);
+};
+
 static int slowpokefs_opt_proc(void *data, const char *arg, int key, struct fuse_args *outargs) {
   char buf[strlen(arg)];
   unsigned int tmp;
@@ -201,6 +244,8 @@ static int slowpokefs_opt_proc(void *data, const char *arg, int key, struct fuse
       min_sleep = tmp;
     }
     return 0;
+  case 4:
+    version();
   }
   return 1;
 };
@@ -211,6 +256,8 @@ static struct fuse_opt slowpokefs_opts[] = {
   FUSE_OPT_KEY("-F ", 1),
   FUSE_OPT_KEY("-M ", 2),
   FUSE_OPT_KEY("-m ", 3),
+  FUSE_OPT_KEY("-v", 4),
+  FUSE_OPT_KEY("--version", 4),
   FUSE_OPT_END
 };
 

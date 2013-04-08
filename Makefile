@@ -1,6 +1,6 @@
 CFLAGS := $(CFLAGS) -Wall -O2 -mtune=native -g $(shell pkg-config --cflags fuse)
 LFLAGS := $(shell pkg-config --libs fuse)
-DEFINES:= $(DEFINES)
+DEFINES:= $(DEFINES) -DVERSION=\""$(shell git describe)"\"
 CC     := gcc
 BINARY := slowpokefs
 
