@@ -173,6 +173,8 @@ static int slowpokefs_chown(const char *path, uid_t u, gid_t g) {
 void usage() {
   printf("USAGE: slowpokefs -F [actual folder] [mount point]\n");
   printf("-h, --help\tThis help.\n");
+  printf("-m\t\tMinimum sleep time in milliseconds [defaults to 2000]\n");
+  printf("-M\t\tMaximum sleep time in milliseconds [defaults to 5000]\n");
   exit(0);
 };
 
