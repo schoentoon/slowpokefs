@@ -6,9 +6,10 @@
 #include <string.h>
 #include <dirent.h>
 #include <unistd.h>
+#include <stdlib.h>
 #include <sys/time.h>
 
-static char* rootdir;
+static char* rootdir = NULL;
 
 static void fullpath(char fpath[PATH_MAX], const char* path) {
   strcpy(fpath, rootdir);
@@ -143,27 +144,83 @@ static int slowpokefs_chown(const char *path, uid_t u, gid_t g) {
   return chown(fpath, u, g);
 };
 
+void usage() {
+  printf("USAGE: slowpokefs -F [actual folder] [mount point]\n");
+  printf("-h, --help\tThis help.\n");
+  exit(0);
+};
+
+static int slowpokefs_opt_proc(void *data, const char *arg, int key, struct fuse_args *outargs) {
+  char buf[strlen(arg)];
+  switch (key) {
+  case 0:
+    usage();
+  case 1:
+    if (sscanf(arg, "-F%s", buf) == 1)
+      rootdir = strdup(buf);
+    return 0;
+  }
+  return 1;
+};
+
+static struct fuse_opt slowpokefs_opts[] = {
+  FUSE_OPT_KEY("-h", 0),
+  FUSE_OPT_KEY("--help", 0),
+  FUSE_OPT_KEY("-F ", 1),
+  FUSE_OPT_END
+};
+
+static struct fuse_operations slowpokefs_oper = {
+  .access = slowpokefs_access,
+  .getattr = slowpokefs_getattr,
+  .fgetattr = slowpokefs_fgetattr,
+  .opendir = slowpokefs_opendir,
+  .readdir = slowpokefs_readdir,
+  .releasedir = slowpokefs_releasedir,
+  .open = slowpokefs_open,
+  .read = slowpokefs_read,
+  .write = slowpokefs_write,
+  .create = slowpokefs_create,
+  .mknod = slowpokefs_mknod,
+  .mkdir = slowpokefs_mkdir,
+  .unlink = slowpokefs_unlink,
+  .rmdir = slowpokefs_unlink,
+  .truncate = slowpokefs_truncate,
+  .rename = slowpokefs_rename,
+  .chmod = slowpokefs_chmod,
+  .chown = slowpokefs_chown
+};
+
 int main(int argc, char** argv) {
-  rootdir = "/tmp";
-  struct fuse_operations slowpokefs_oper = {
-    .access = slowpokefs_access,
-    .getattr = slowpokefs_getattr,
-    .fgetattr = slowpokefs_fgetattr,
-    .opendir = slowpokefs_opendir,
-    .readdir = slowpokefs_readdir,
-    .releasedir = slowpokefs_releasedir,
-    .open = slowpokefs_open,
-    .read = slowpokefs_read,
-    .write = slowpokefs_write,
-    .create = slowpokefs_create,
-    .mknod = slowpokefs_mknod,
-    .mkdir = slowpokefs_mkdir,
-    .unlink = slowpokefs_unlink,
-    .rmdir = slowpokefs_unlink,
-    .truncate = slowpokefs_truncate,
-    .rename = slowpokefs_rename,
-    .chmod = slowpokefs_chmod,
-    .chown = slowpokefs_chown
-  };
-  return fuse_main(argc, argv, &slowpokefs_oper, NULL);
+  struct fuse_args args = FUSE_ARGS_INIT(argc, argv);
+  char* mountpoint;
+  int multithreaded;
+  int foreground;
+  if (fuse_opt_parse(&args, NULL, slowpokefs_opts, slowpokefs_opt_proc) == -1)
+    exit(1);
+  if (!rootdir) {
+    fprintf(stderr, "You didn't specify a real folder..\n\n");
+    usage();
+  }
+  if (fuse_parse_cmdline(&args, &mountpoint, &multithreaded, &foreground) == -1)
+    exit(1);
+  struct fuse_chan *ch = fuse_mount(mountpoint, &args);
+  if (!ch)
+    exit(1);
+  struct fuse *fuse = fuse_new(ch, &args, &slowpokefs_oper, sizeof(struct fuse_operations), NULL);
+  if (!fuse) {
+    fuse_unmount(mountpoint, ch);
+    exit(1);
+  }
+  if (fuse_daemonize(foreground) != -1) {
+    if (fuse_set_signal_handlers(fuse_get_session(fuse)) == -1) {
+      fuse_unmount(mountpoint, ch);
+      fuse_destroy(fuse);
+      exit(1);
+    }
+  }
+  if (multithreaded)
+    return fuse_loop_mt(fuse);
+  else
+    return fuse_loop(fuse);
 };
