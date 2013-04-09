@@ -181,7 +181,7 @@ void usage() {
 //#define ASCII_SLOWPOKE /* Uncomment this define to get rid of the big ascii slowpoke */
 
 void version() {
-  printf("Slowpokefs ~ %s\n", VERSION);
+  printf("Slowpokefs - %s\n", VERSION);
 #ifndef ASCII_SLOWPOKE
   printf("                                  _.---\"'\"\"\"\"\"'`--.._\n");
   printf("                             _,.-'                   `-._\n");
@@ -228,8 +228,19 @@ static int slowpokefs_opt_proc(void *data, const char *arg, int key, struct fuse
   case 0:
     usage();
   case 1:
-    if (sscanf(arg, "-F%s", buf) == 1)
-      rootdir = strdup(buf);
+    if (sscanf(arg, "-F%s", buf) == 1) {
+      if (buf[strlen(buf)-1] == '/')
+        buf[strlen(buf)-1] = '\0';
+      if (buf[0] != '/') {
+        char cwd[PATH_MAX];
+        getcwd(cwd, sizeof(cwd));
+        strncat(cwd, "/", PATH_MAX);
+        strncat(cwd, buf, PATH_MAX);
+        rootdir = strdup(cwd);
+        printf("rootdir: %s\n", rootdir);
+      } else
+        rootdir = strdup(buf);
+    }
     return 0;
   case 2:
     if (sscanf(arg, "-M%d", &tmp) == 1)
