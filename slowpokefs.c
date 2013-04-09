@@ -29,25 +29,30 @@ static int slowpokefs_access(const char *path, int mask) {
   delay();
   char fpath[PATH_MAX];
   fullpath(fpath, path);
-  return access(fpath, mask);
+  int res = access(fpath, mask);
+  if (res < 0)
+    return -errno;
+  return res;
 };
 
 static int slowpokefs_getattr(const char *path, struct stat *stbuf) {
   delay();
   char fpath[PATH_MAX];
   fullpath(fpath, path);
-  if (lstat(fpath, stbuf) == -1)
+  int res = lstat(fpath, stbuf);
+  if (res != 0)
     return -errno;
-  return 0;
+  return res;
 };
 
 static int slowpokefs_fgetattr(const char *path, struct stat *stbuf, struct fuse_file_info *fi) {
   delay();
   char fpath[PATH_MAX];
   fullpath(fpath, path);
-  if (fstat(fi->fh, stbuf) == -1)
+  int res = fstat(fi->fh, stbuf);
+  if (res == -1)
     return -errno;
-  return 0;
+  return res;
 };
 
 static int slowpokefs_opendir(const char *path, struct fuse_file_info *fi) {
@@ -95,7 +100,7 @@ static int slowpokefs_open(const char *path, struct fuse_file_info *fi) {
   fullpath(fpath, path);
   int fd = open(fpath, fi->flags);
   if (fd < 0)
-    return fd;
+    return -errno;
   fi->fh = fd;
   return 0;
 };
@@ -103,27 +108,49 @@ static int slowpokefs_open(const char *path, struct fuse_file_info *fi) {
 static int slowpokefs_read(const char *path, char *buf, size_t size
                           ,off_t offset, struct fuse_file_info *fi) {
   delay();
-  return pread(fi->fh, buf, size, offset);
+  int res = pread(fi->fh, buf, size, offset);
+  if (res < 0)
+    return -errno;
+  return res;
 };
 
 static int slowpokefs_write(const char *path, const char *buf, size_t size
                            ,off_t offset, struct fuse_file_info *fi) {
   delay();
-  return pwrite(fi->fh, buf, size, offset);
+  int res = pwrite(fi->fh, buf, size, offset);
+  if (res < 0)
+    return -errno;
+  return res;
 };
 
 static int slowpokefs_mkdir(const char *path, mode_t m) {
   delay();
   char fpath[PATH_MAX];
   fullpath(fpath, path);
-  return mkdir(fpath, m);
+  int res = mkdir(fpath, m);
+  if (res < 0)
+    return -errno;
+  return res;
+};
+
+static int slowpokefs_rmdir(const char *path) {
+  delay();
+  char fpath[PATH_MAX];
+  fullpath(fpath, path);
+  int res = rmdir(path);
+  if (res < 0)
+    return -errno;
+  return res;
 };
 
 static int slowpokefs_create(const char *path, mode_t m, struct fuse_file_info *fi) {
   delay();
   char fpath[PATH_MAX];
   fullpath(fpath, path);
-  return creat(fpath, m);
+  int fd = creat(fpath, m);
+  if (fd < 0)
+    return -errno;
+  return 0;
 };
 
 static int slowpokefs_mknod(const char *path, mode_t m, dev_t d) {
@@ -133,11 +160,25 @@ static int slowpokefs_mknod(const char *path, mode_t m, dev_t d) {
   return mknod(fpath, m, d);
 };
 
+static int slowpokefs_readlink(const char *path, char *link, size_t size) {
+  delay();
+  char fpath[PATH_MAX];
+  fullpath(fpath, path);
+  int res = readlink(fpath, link, size - 1);
+  if (res < 0)
+    return -errno;
+  link[res] = '\0';
+  return 0;
+};
+
 static int slowpokefs_unlink(const char *path) {
   delay();
   char fpath[PATH_MAX];
   fullpath(fpath, path);
-  return unlink(fpath);
+  int res = unlink(fpath);
+  if (res < 0)
+    return -errno;
+  return res;
 };
 
 static int slowpokefs_rename(const char *src, const char *dst) {
@@ -146,7 +187,10 @@ static int slowpokefs_rename(const char *src, const char *dst) {
   char dstpath[PATH_MAX];
   fullpath(srcpath, src);
   fullpath(dstpath, dst);
-  return rename(srcpath, dstpath);
+  int res = rename(srcpath, dstpath);
+  if (res < 0)
+    return -errno;
+  return res;
 };
 
 static int slowpokefs_truncate(const char *path, off_t o) {
@@ -156,18 +200,34 @@ static int slowpokefs_truncate(const char *path, off_t o) {
   return truncate(path, o);
 };
 
+static int slowpokefs_symlink(const char *path, const char *link) {
+  delay();
+  char fpath[PATH_MAX];
+  fullpath(fpath, link);
+  int res = symlink(path, fpath);
+  if (res < 0)
+    return -errno;
+  return res;
+};
+
 static int slowpokefs_chmod(const char *path, mode_t m) {
   delay();
   char fpath[PATH_MAX];
   fullpath(fpath, path);
-  return chmod(fpath, m);
+  int res = chmod(fpath, m);
+  if (res < 0)
+    return -errno;
+  return res;
 };
 
 static int slowpokefs_chown(const char *path, uid_t u, gid_t g) {
   delay();
   char fpath[PATH_MAX];
   fullpath(fpath, path);
-  return chown(fpath, u, g);
+  int res = chown(fpath, u, g);
+  if (res < 0)
+    return -errno;
+  return res;
 };
 
 void usage() {
@@ -237,7 +297,6 @@ static int slowpokefs_opt_proc(void *data, const char *arg, int key, struct fuse
         strncat(cwd, "/", PATH_MAX);
         strncat(cwd, buf, PATH_MAX);
         rootdir = strdup(cwd);
-        printf("rootdir: %s\n", rootdir);
       } else
         rootdir = strdup(buf);
     }
@@ -285,10 +344,12 @@ static struct fuse_operations slowpokefs_oper = {
   .create = slowpokefs_create,
   .mknod = slowpokefs_mknod,
   .mkdir = slowpokefs_mkdir,
+  .rmdir = slowpokefs_rmdir,
   .unlink = slowpokefs_unlink,
-  .rmdir = slowpokefs_unlink,
+  .readlink = slowpokefs_readlink,
   .truncate = slowpokefs_truncate,
   .rename = slowpokefs_rename,
+  .symlink = slowpokefs_symlink,
   .chmod = slowpokefs_chmod,
   .chown = slowpokefs_chown
 };
