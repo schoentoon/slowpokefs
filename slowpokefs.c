@@ -118,7 +118,7 @@ static int slowpokefs_readdir(const char *path, void *buf, fuse_fill_dir_t fille
     delay();
   char fpath[PATH_MAX];
   fullpath(fpath, path);
-  DIR *dir = opendir(fpath);
+  DIR *dir = (DIR*) fi->fh;
   struct dirent *de;
   if (!dir)
     return -errno;
@@ -130,7 +130,6 @@ static int slowpokefs_readdir(const char *path, void *buf, fuse_fill_dir_t fille
     if (filler(buf, de->d_name, &st, 0))
       break;
   }
-  closedir(dir);
   return 0;
 };
 
