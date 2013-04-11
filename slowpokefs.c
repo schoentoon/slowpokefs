@@ -269,7 +269,7 @@ static int slowpokefs_truncate(const char *path, off_t o) {
     delay();
   char fpath[PATH_MAX];
   fullpath(fpath, path);
-  int res = truncate(path, o);
+  int res = truncate(fpath, o);
   if (res < 0)
     return -errno;
   return res;
