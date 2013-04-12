@@ -319,7 +319,7 @@ void usage() {
   printf("-h, --help\tThis help.\n");
   printf("-m\t\tMinimum sleep time in milliseconds [defaults to 2000]\n");
   printf("-M\t\tMaximum sleep time in milliseconds [defaults to 5000]\n");
-  printf("-D\t\tKeep open and print system calls to stderr.\n");
+  printf("-D, --debug\tKeep open and print system calls to stderr.\n");
   printf("--no-slow-read\tDon't slow down the read operations.\n");
   printf("--no-slow-write\tDon't slow down the write operations.\n");
   exit(0);
@@ -425,6 +425,7 @@ static struct fuse_opt slowpokefs_opts[] = {
   FUSE_OPT_KEY("-v", 4),
   FUSE_OPT_KEY("--version", 4),
   FUSE_OPT_KEY("-D", 5),
+  FUSE_OPT_KEY("--debug", 5),
   FUSE_OPT_KEY("--no-slow-read", 6),
   FUSE_OPT_KEY("--no-slow-write", 7),
   FUSE_OPT_END
