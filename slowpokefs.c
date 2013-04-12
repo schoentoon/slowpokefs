@@ -26,10 +26,10 @@
 #include <sys/time.h>
 
 static char* rootdir = NULL;
-unsigned int max_sleep = 5000;
-unsigned int min_sleep = 2000;
+static unsigned int max_sleep = 5000;
+static unsigned int min_sleep = 2000;
 
-struct options {
+static struct options {
   unsigned char debug : 1;
   unsigned char no_slow_read : 1;
   unsigned char no_slow_write : 1;
