@@ -6,5 +6,3 @@ before_install:
   - sudo apt-get update -qq >/dev/null 2>&1
   - sudo apt-get install -qq libfuse-dev >/dev/null 2>&1
 script: make dev CC=$CC
-after_script:
-  - ./test.sh
