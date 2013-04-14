@@ -314,6 +314,19 @@ static int slowpokefs_chown(const char *path, uid_t u, gid_t g) {
   return res;
 };
 
+static int slowpokefs_utime(const char *path, struct utimbuf *ubuf) {
+  if (options.debug)
+    fprintf(stderr, "utime(%s);\n", path);
+  if (!options.no_slow_write)
+    delay();
+  char fpath[PATH_MAX];
+  fullpath(fpath, path);
+  int res = utime(fpath, ubuf);
+  if (res < 0)
+    return -errno;
+  return res;
+};
+
 void usage() {
   printf("USAGE: slowpokefs -F [actual folder] [mount point]\n");
   printf("-h, --help\tThis help.\n");
@@ -451,7 +464,8 @@ static struct fuse_operations slowpokefs_oper = {
   .rename = slowpokefs_rename,
   .symlink = slowpokefs_symlink,
   .chmod = slowpokefs_chmod,
-  .chown = slowpokefs_chown
+  .chown = slowpokefs_chown,
+  .utime = slowpokefs_utime
 };
 
 int main(int argc, char** argv) {
