@@ -1,5 +1,5 @@
 CFLAGS := $(CFLAGS) -Wall -O2 -mtune=native -g $(shell pkg-config --cflags fuse)
-LFLAGS := $(shell pkg-config --libs fuse)
+LFLAGS := $(shell pkg-config --libs fuse) -lpthread
 DEFINES:= $(DEFINES) -DVERSION=\""$(shell git describe)"\"
 CC     := gcc
 BINARY := slowpokefs
