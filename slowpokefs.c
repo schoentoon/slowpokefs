@@ -33,13 +33,14 @@ static struct options {
   unsigned char debug : 1;
   unsigned char no_slow_read : 1;
   unsigned char no_slow_write : 1;
+  unsigned char nano_sleep : 1;
 } options;
 
 static void delay() {
   if (max_sleep == min_sleep)
-    usleep(min_sleep*1000);
+    usleep(min_sleep * (options.nano_sleep ? 1 : 1000));
   else
-    usleep(((rand() % (max_sleep-min_sleep)) + min_sleep) * 1000);
+    usleep(((rand() % (max_sleep-min_sleep)) + min_sleep) * (options.nano_sleep ? 1 : 1000));
 };
 
 static void fullpath(char fpath[PATH_MAX], const char* path) {
@@ -335,6 +336,7 @@ void usage() {
   printf("-D, --debug\tKeep open and print system calls to stderr.\n");
   printf("--no-slow-read\tDon't slow down the read operations.\n");
   printf("--no-slow-write\tDon't slow down the write operations.\n");
+  printf("-n, --nano\tSleep in nano seconds instead of milliseconds.\n");
   exit(0);
 };
 
@@ -425,6 +427,9 @@ static int slowpokefs_opt_proc(void *data, const char *arg, int key, struct fuse
   case 7:
     options.no_slow_write = 1;
     return 0;
+  case 8:
+    options.nano_sleep = 1;
+    return 0;
   }
   return 1;
 };
@@ -441,6 +446,8 @@ static struct fuse_opt slowpokefs_opts[] = {
   FUSE_OPT_KEY("--debug", 5),
   FUSE_OPT_KEY("--no-slow-read", 6),
   FUSE_OPT_KEY("--no-slow-write", 7),
+  FUSE_OPT_KEY("-n", 8),
+  FUSE_OPT_KEY("--nano", 8),
   FUSE_OPT_END
 };
 
