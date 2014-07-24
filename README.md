@@ -14,3 +14,8 @@ Then I did ls on the same directory but this time mounted through slowpokefs, th
 > sys     0m0.005s
 
 Now this may not be a big deal in a lot of cases, but it can be a big deal in your own programs. For example we have a single threaded web server, when the IO hangs like the server will just not accept new connections. And yes IO can be this slow without a program like this think damaged hard drives.
+
+Notes
+=====
+
+In case you're writing to it with buffers larger than 4096 bytes fuse will by default split your write operation up in chunks of 4096 bytes. If you don't want this mount with -o direct_io
